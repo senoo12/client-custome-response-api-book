@@ -1,4 +1,4 @@
-package infra
+package common
 
 type Meta struct {
 	Message string
@@ -16,6 +16,7 @@ type ResponseList struct {
 	Data interface {}
 	Total int
 }
+
 
 func ResponseAPI(message string, status string, code int, data interface{} ) Response {
 	meta := Meta {

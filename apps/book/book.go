@@ -1,4 +1,4 @@
-package models
+package book
 
 import (
 	"time"
@@ -9,6 +9,6 @@ type Book struct {
 	Title string
 	Author string
 	Category string
-	Crated_At time.Time
+	Created_At time.Time
 	Update_At time.Time
 }

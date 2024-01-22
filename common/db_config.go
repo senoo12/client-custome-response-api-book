@@ -1,4 +1,4 @@
-package infra
+package common
 
 import (
 	"database/sql"
@@ -19,3 +19,5 @@ func ConnectDatabase() (*sql.DB, error )  {
 	fmt.Println("Connect")
 	return db, nil
 }
+
+const Secret = "secret"

@@ -1,129 +1,124 @@
 package book
 
 import (
-	bookModel "client-response-api-book/infra/db/models"
-	infra "client-response-api-book/infra"
+	common "client-response-api-book/common"
 	"github.com/gofiber/fiber/v2"
-	"log"
 	"time"
-	"fmt"
 )
 
 func GetAllBooks(c *fiber.Ctx) error {
-	var books []bookModel.Book
-	data, err := infra.DB.Query("SELECT * FROM books")
+	var books []Book
+	data, err := common.DB.Query("SELECT * FROM books")
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	defer data.Close()
 
 	for data.Next(){
-		var book bookModel.Book
-		if err := data.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Crated_At, &book.Update_At); err != nil {
-			log.Fatal(err)
+		var book Book
+		if err := data.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Created_At, &book.Update_At); err != nil {
+			return err
 		}
 		books = append(books, book)
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	response := infra.ResponseAPIList("Success", "success", fiber.StatusOK, books, len(books))
+	response := common.ResponseAPIList("Success", "success", fiber.StatusOK, books, len(books))
 	return c.JSON(response)
 }
 
 func GetBookById(c *fiber.Ctx) error {
 	idBooks := c.Params("id")
-	var book bookModel.Book
+	var book Book
 
-	data, err := infra.DB.Query("SELECT * FROM `books` WHERE id = ?;", idBooks)
+	data, err := common.DB.Query("SELECT * FROM `books` WHERE id = ?;", idBooks)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer data.Close()
 
 	if data.Next() {
-		if err := data.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Crated_At, &book.Update_At); err != nil {
-			log.Fatal(err)
+		if err := data.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Created_At, &book.Update_At); err != nil {
+			return err
 		}
 	} else {
-		responseFailed := infra.ResponseAPI("Failed", "failed", fiber.StatusBadRequest, book)
+		responseFailed := common.ResponseAPI("Failed", "failed", fiber.StatusBadRequest, book)
 		return c.JSON(responseFailed)
 	}
 
-	response := infra.ResponseAPI("Success", "success", fiber.StatusOK, book)
+	response := common.ResponseAPI("Success", "success", fiber.StatusOK, book)
 	return c.JSON(response)
 }
 
 func CreateBook(c *fiber.Ctx) error {
-	var book bookModel.Book
-	// fmt.Println(book)
+	var book Book
 
 	if err := c.BodyParser(&book); err != nil {
 		return err
 	}
 
-	data, err := infra.DB.Exec("INSERT INTO books(title, author, category) VALUES (?, ?, ?)", book.Title, book.Author, book.Category)
-	fmt.Println(book.Title)
+	data, err := common.DB.Exec("INSERT INTO books(title, author, category) VALUES (?, ?, ?)", book.Title, book.Author, book.Category)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	lastInsertID, err := data.LastInsertId()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	book.ID = int(lastInsertID)
 
-	response := infra.ResponseAPI("Success", "success", fiber.StatusOK, book)
+	response := common.ResponseAPI("Success", "success", fiber.StatusOK, book)
 	return c.JSON(response)
 }
 
 func UpdateBook(c *fiber.Ctx) error  {
 	idBook := c.Params("id")
-	var book bookModel.Book
+	var book Book
 
 	if err := c.BodyParser(&book); err != nil {
 		return err
 	}
 
-	_, err := infra.DB.Exec("UPDATE books SET title = ?, author = ?, category = ?, updated_at = ? WHERE id = ?",
+	_, err := common.DB.Exec("UPDATE books SET title = ?, author = ?, category = ?, updated_at = ? WHERE id = ?",
     book.Title, book.Author, book.Category, time.Now(), idBook)
 	if err != nil {
 		return err
 	}
 
-	err = infra.DB.QueryRow("SELECT * FROM books WHERE id = ?;", idBook).
-		Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Crated_At, &book.Update_At)
+	err = common.DB.QueryRow("SELECT * FROM books WHERE id = ?;", idBook).
+		Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Created_At, &book.Update_At)
 
 	if err != nil {
 		return err
 	}
 
-	response := infra.ResponseAPI("Success", "success", fiber.StatusOK, book)
+	response := common.ResponseAPI("Success", "success", fiber.StatusOK, book)
 	return c.JSON(response)
 }
 
 func DeleteBook(c *fiber.Ctx) error  {
 	idBook := c.Params("id")
-	var book bookModel.Book
+	var book Book
 
-	err := infra.DB.QueryRow("SELECT * FROM books WHERE id = ?;", idBook).
-	Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Crated_At, &book.Update_At)
+	err := common.DB.QueryRow("SELECT * FROM books WHERE id = ?;", idBook).
+	Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Created_At, &book.Update_At)
 
 	if err != nil {
-		responseFailed := infra.ResponseAPI("Failed", "failed", fiber.StatusBadRequest, book)
+		responseFailed := common.ResponseAPI("Failed", "failed", fiber.StatusBadRequest, book)
 		return c.JSON(responseFailed)
 	}
-	_, err = infra.DB.Exec("DELETE FROM books WHERE id = ?", idBook)
+	_, err = common.DB.Exec("DELETE FROM books WHERE id = ?", idBook)
 	if err != nil {
 		return err
 	}
 
-	response := infra.ResponseAPI("Success", "success", fiber.StatusOK, book)
+	response := common.ResponseAPI("Success", "success", fiber.StatusOK, book)
 	return c.JSON(response)
 }
